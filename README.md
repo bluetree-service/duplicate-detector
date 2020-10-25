@@ -1,5 +1,20 @@
 # Duplicated file detector
 
-Alloow to find and optionally delete duplicated files. Works on multiple threads to improve performance.
+Allow to find and optionally delete duplicated files. Works on multiple threads to improve performance.
 
 If you don't have or you don't want to install PHP, just use it as docker container.
+
+## Examples
+
+### Docker
+
+`docker run -v {local path with files to check}:/duplicates -it --rm chajr/duplicate-detector duplicate-detector -ipS -t 4`
+
+That command execute checking file duplications, on 4 threads, progress bar and with interactive selecting files to delete.
+
+For more information run `docker run -it --rm chajr/duplicate-detector duplicate-detector -h`
+
+By default `duplicate-detector` search for files in `/duplicates` but you can link your directory, or directories to container
+and provide them into detector.
+
+`docker run -v ./dir1:/dir1 -v ./dir2:/dir2 -it --rm chajr/duplicate-detector duplicate-detector -ipS -t 4 /dir1 /dir2`

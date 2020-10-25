@@ -189,7 +189,7 @@ class DuplicatedFilesTool extends Command
 
         $sources = $this->input->getArgument('source');
         if (empty($sources)) {
-            $sources = '/duplicates';
+            $sources = ['/duplicates'];
         }
 
         $oldDup = \glob(self::TMP_DUMP_DIR . '*.json');
