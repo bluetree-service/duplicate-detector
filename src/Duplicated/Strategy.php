@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace DuplicateDetector\Duplicated;
 
 use DuplicateDetector\DuplicatedFilesTool;

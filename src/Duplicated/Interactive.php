@@ -1,33 +1,33 @@
 <?php
 
+declare(strict_types=1);
+
 namespace DuplicateDetector\Duplicated;
 
 use DuplicateDetector\DuplicatedFilesTool;
 use BlueConsole\MultiSelect;
 use BlueData\Data\Formats;
 use BlueFilesystem\StaticObjects\Fs;
+use BlueConsole\Style;
 
 class Interactive implements Strategy
 {
-    /**
-     * @todo use \BlueConsole\MultiSelect::MOD_LINE_CHAR after library update
-     */
     public const MOD_LINE_CHAR = "\033[1A";
 
     /**
-     * @var \BlueConsole\Style
+     * @var Style
      */
-    protected $blueStyle;
+    protected Style $blueStyle;
 
     /**
      * @var MultiSelect
      */
-    protected $multiselect;
+    protected MultiSelect $multiselect;
 
-    protected $deleteCounter = 0;
-    protected $deleteSizeCounter = 0;
-    protected $duplicatedFiles = 0;
-    protected $duplicatedFilesSize = 0;
+    protected int $deleteCounter = 0;
+    protected int $deleteSizeCounter = 0;
+    protected int $duplicatedFiles = 0;
+    protected int $duplicatedFilesSize = 0;
 
     /**
      * @param DuplicatedFilesTool $dft
@@ -85,7 +85,6 @@ class Interactive implements Strategy
             $hashWithSize[] = "$file (<info>$formattedSize</>)";
         }
 
-        //@todo show deleted file size
         $selected = $multiselect->renderMultiSelect($hashWithSize);
 
         if ($selected) {
@@ -103,7 +102,6 @@ class Interactive implements Strategy
     protected function processRemoving(array $selected, array $hash) : void
     {
         foreach (array_keys($selected) as $idToDelete) {
-            //delete process
             $this->deleteSizeCounter += filesize($hash[$idToDelete]);
             $this->blueStyle->infoMessage('Removing: ' . $hash[$idToDelete]);
             $out = Fs::delete($hash[$idToDelete]);

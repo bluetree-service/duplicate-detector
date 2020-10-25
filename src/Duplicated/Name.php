@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace DuplicateDetector\Duplicated;
 
 class Name
@@ -11,7 +13,7 @@ class Name
 
             foreach ($names as $verifiedPath => $toVerified) {
                 $val = 0;
-                similar_text($fileName, $toVerified, $val);
+                \similar_text($fileName, $toVerified, $val);
 
                 if ($val >= $similarity) {
                     if (!($hashes[$fileName] ?? false)) {

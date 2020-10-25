@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace DuplicateDetector;
 
 use Symfony\Component\Console\{
@@ -8,26 +10,32 @@ use Symfony\Component\Console\{
     Output\OutputInterface,
     Helper\FormatterHelper,
     Helper\ProgressBar,
+    Command\Command,
 };
-use Symfony\Component\Console\Command\Command;
-use DuplicateDetector\Duplicated\Strategy;
-use BlueFilesystem\StaticObjects\Structure;
-use BlueFilesystem\StaticObjects\Fs;
+use BlueFilesystem\StaticObjects\{
+    Structure,
+    Fs
+};
 use BlueData\Data\Formats;
 use BlueRegister\{
     Register,
     RegisterException,
 };
 use BlueConsole\Style;
-use DuplicateDetector\Duplicated\Interactive;
-use DuplicateDetector\Duplicated\Name;
+use DuplicateDetector\Duplicated\{
+    Strategy,
+    Interactive,
+    Name,
+};
 use React\{
     EventLoop\Factory,
     ChildProcess\Process,
     EventLoop\LoopInterface,
 };
-use Ramsey\Uuid\Uuid;
-use Ramsey\Uuid\Exception\UnsatisfiedDependencyException;
+use Ramsey\Uuid\{
+    Uuid,
+    Exception\UnsatisfiedDependencyException,
+};
 
 class DuplicatedFilesTool extends Command
 {
@@ -36,49 +44,47 @@ class DuplicatedFilesTool extends Command
     /**
      * @var Register
      */
-    protected $register;
+    protected Register $register;
 
     /**
      * @var InputInterface
      */
-    protected $input;
+    protected InputInterface $input;
 
     /**
      * @var OutputInterface
      */
-    protected $output;
+    protected OutputInterface $output;
 
     /**
      * @var Style
      */
-    protected $blueStyle;
+    protected Style $blueStyle;
 
     /**
      * @var FormatterHelper
      */
-    protected $formatter;
+    protected FormatterHelper $formatter;
 
     /**
      * @var string
      */
-    protected $messageFormat = ' %current%/%max% [%bar%] %percent:3s%% %elapsed:6s%/%estimated:-6s%';
+    protected string $messageFormat = ' %current%/%max% [%bar%] %percent:3s%% %elapsed:6s%/%estimated:-6s%';
 
     /**
      * @var ProgressBar
      */
-    protected $progressBar;
+    protected ProgressBar $progressBar;
 
-    protected $deleteCounter = 0;
-    protected $deleteSizeCounter = 0;
-    protected $duplicatedFiles = 0;
-    protected $duplicatedFilesSize = 0;
+    protected int $deleteCounter = 0;
+    protected int $deleteSizeCounter = 0;
+    protected int $duplicatedFiles = 0;
+    protected int $duplicatedFilesSize = 0;
 
-    /**
-     * @param Register $register
-     */
     public function __construct()
     {
         parent::__construct();
+
         $this->register = new Register;
     }
 
@@ -257,6 +263,7 @@ class DuplicatedFilesTool extends Command
      * @param array $data
      * @param int $chunk
      * @return array
+     * @throws \JsonException
      */
     protected function useThreads(array $fileList, array $data, int $chunk): array
     {
@@ -265,7 +272,7 @@ class DuplicatedFilesTool extends Command
         $chunkValue = \ceil(\count($fileList) / $threads);
 
         if ($chunkValue > 0) {
-            $fileList = \array_chunk($fileList, $chunkValue);
+            $fileList = \array_chunk($fileList, (int) $chunkValue);
         }
 
         $loop = Factory::create();
@@ -358,7 +365,6 @@ class DuplicatedFilesTool extends Command
                 $progressBar->setMessage($file);
             }
 
-            /** @noinspection ReturnFalseInspection */
             if ($this->input->getOption('skip-empty') && \filesize($file) === 0) {
                 continue;
             }
@@ -369,7 +375,6 @@ class DuplicatedFilesTool extends Command
                 $data['names'] = $name;
             } else {
                 if ($chunk) {
-                    /** @noinspection ReturnFalseInspection */
                     $content = \file_get_contents($file, false, null, 0, $chunk);
                     $hash = hash('sha3-256', $content);
                 } else {
@@ -393,6 +398,7 @@ class DuplicatedFilesTool extends Command
      * @param array $hashFiles
      * @param int $chunk
      * @return void
+     * @throws \JsonException
      */
     protected function createProcesses(
         array $processArrays,
@@ -410,7 +416,6 @@ class DuplicatedFilesTool extends Command
             $uuid = $this->getUuid();
             $path = self::TMP_DUMP_DIR . "$uuid.json";
             $hashFiles[] = $path;
-            /** @noinspection ReturnFalseInspection */
             \file_put_contents($path, $hashes);
 
             $dir = __DIR__;
@@ -471,7 +476,6 @@ class DuplicatedFilesTool extends Command
             $message = $progressList[$i] ?? '';
             echo "\r";
 
-            /** @noinspection ReturnFalseInspection */
             if (\strpos($message, 'Error') === 0) {
                 $this->blueStyle->errorMessage($message);
             } else {

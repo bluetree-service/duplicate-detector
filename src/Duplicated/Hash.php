@@ -1,5 +1,6 @@
 <?php
 
+/** @noinspection MultiAssignmentUsageInspection */
 $hasHListFile = $argv[1];
 $chunk = $argv[2];
 
@@ -15,8 +16,6 @@ try {
     $done = 0;
 
     foreach ($fileList as $file) {
-        //@todo    if ($this->input->getOption('skip-empty') && filesize($file) === 0) {
-        //@todo    if ($this->input->getOption('check-by-name')) {
         if ($chunk) {
             $content = file_get_contents($file, false, null, 0, $chunk);
             $hash = hash('sha3-256', $content);
@@ -25,18 +24,26 @@ try {
         }
 
         $hashes[$hash][] = $file;
-        echo json_encode([
-            'status'  => [
-                'all' => $count,
-                'left' => $done++
+        echo json_encode(
+            [
+                'status'  => [
+                    'all' => $count,
+                    'left' => $done++
+                ],
             ],
-        ], JSON_THROW_ON_ERROR, 512);
+            JSON_THROW_ON_ERROR,
+            512
+        );
     }
 
-    $data = json_encode([
-        'names'  => $names,
-        'hashes' => $hashes
-    ], JSON_THROW_ON_ERROR, 512);
+    $data = json_encode(
+        [
+            'names'  => $names,
+            'hashes' => $hashes
+        ],
+        JSON_THROW_ON_ERROR,
+        512
+    );
 
     file_put_contents($hasHListFile, $data);
 

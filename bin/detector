@@ -1,6 +1,8 @@
 #!/usr/bin/env php
 <?php
 
+declare(strict_types=1);
+
 $mainDir = __DIR__ . '/../';
 
 require_once $mainDir . 'vendor/autoload.php';
@@ -25,7 +27,7 @@ try {
     $application->add($command);
     $application->setDefaultCommand($command->getName(), true);
 
-    $code = $application->run();
+    $application->run();
 } catch (Throwable $exception) {
     $output->writeln('<error>' . $exception->getMessage() . '</error>');
 }
