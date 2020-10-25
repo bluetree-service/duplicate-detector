@@ -1,0 +1,31 @@
+#!/usr/bin/env php
+<?php
+
+$mainDir = __DIR__ . '/../';
+
+require_once $mainDir . 'vendor/autoload.php';
+
+use Symfony\Component\Console\Application;
+use Symfony\Component\Console\Output\ConsoleOutput;
+use DuplicateDetector\DuplicatedFilesTool;
+
+$composer = json_decode(
+    file_get_contents($mainDir . 'composer.json')
+);
+
+$code = 1;
+$output = new ConsoleOutput();
+
+try {
+    $command = new DuplicatedFilesTool;
+    $application = new Application;
+
+    $application->setName($composer->description);
+    $application->setVersion($composer->version);
+    $application->add($command);
+    $application->setDefaultCommand($command->getName(), true);
+
+    $code = $application->run();
+} catch (Throwable $exception) {
+    $output->writeln('<error>' . $exception->getMessage() . '</error>');
+}
