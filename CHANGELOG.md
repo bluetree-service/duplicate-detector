@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.3.1.0 - 2021-05-02
+### Changed
+* Hash file directory
+* Remove some files from docker image
+* Refactored Dockerfile
+
 ## 0.3.0.1 - 2020-11-29
 ### Added
 * Composer install to image build process
