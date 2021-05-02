@@ -39,7 +39,7 @@ use Ramsey\Uuid\{
 
 class DuplicatedFilesTool extends Command
 {
-    public const TMP_DUMP_DIR = __DIR__ . '/../var/tmp/dup/';
+    public const TMP_DUMP_DIR = __DIR__ . '/duplicate-detector/var/tmp/dup/';
 
     /**
      * @var Register
