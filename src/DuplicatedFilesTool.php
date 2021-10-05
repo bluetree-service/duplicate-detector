@@ -85,7 +85,7 @@ class DuplicatedFilesTool extends Command
     {
         parent::__construct();
 
-        $this->register = new Register;
+        $this->register = new Register();
     }
 
     /**
@@ -264,6 +264,7 @@ class DuplicatedFilesTool extends Command
      * @param int $chunk
      * @return array
      * @throws \JsonException
+     * @throws \JsonException
      */
     protected function useThreads(array $fileList, array $data, int $chunk): array
     {
@@ -398,6 +399,7 @@ class DuplicatedFilesTool extends Command
      * @param array $hashFiles
      * @param int $chunk
      * @return void
+     * @throws \JsonException
      * @throws \JsonException
      */
     protected function createProcesses(
