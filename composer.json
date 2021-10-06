@@ -16,23 +16,17 @@
     ],
     "require": {
         "php": ">=7.4.0",
-        "symfony/filesystem": "4.0.*",
         "symfony/console": "^4.1",
         "bluetree-service/register": "0.3.*",
-        "bluetree-service/container": "~0.1",
         "bluetree-service/filesystem": "^0.2",
         "bluetree-service/data": "~0.2",
         "bluetree-service/symfony-console-style": "^0.4",
-        "bentools/string-combinations": "^1.2",
-        "symfony/var-dumper": "~4.1",
-        "mikehaertl/php-shellcommand": "^1.4",
-        "bluetree-service/cache": "^0.3.0",
         "react/child-process": "^0.6.1",
         "ramsey/uuid": "^3.8",
-        "undemanding/difference": "^1.1",
         "serafim/pipe": "^0.2.0"
     },
     "require-dev": {
+        "symfony/var-dumper": "~4.1",
         "satooshi/php-coveralls": "1.0.*",
         "phpunit/phpunit": "7.0.*",
         "phpmetrics/phpmetrics": "^2.5"

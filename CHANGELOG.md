@@ -1,5 +1,12 @@
 # Change Log
 
+## 0.3.1.1 - 2021-10-05
+### Changed
+* Reduce container weight
+* Changed building procedure
+### Removed
+* Removed some unused libraries
+
 ## 0.3.1.0 - 2021-05-02
 ### Changed
 * Hash file directory
