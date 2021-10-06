@@ -14,7 +14,7 @@ RUN wget https://raw.githubusercontent.com/composer/getcomposer.org/76a7060ccb93
 FROM php:7.4-cli-alpine
 
 COPY . /duplicate-detector/
-COPY --from=base /duplicate-detector/vendor /duplicate-detector/
+COPY --from=base /duplicate-detector/vendor /duplicate-detector/vendor
 
 RUN ln -s /duplicate-detector/bin/detector /usr/local/bin/detector; \
     chmod 0777 /tmp
