@@ -26,6 +26,7 @@ use DuplicateDetector\Duplicated\{
     Strategy,
     Interactive,
     Name,
+    AutoDel,
 };
 use React\{
     EventLoop\Factory,
@@ -40,6 +41,7 @@ use Ramsey\Uuid\{
 class DuplicatedFilesTool extends Command
 {
     public const TMP_DUMP_DIR = '/tmp/';
+    public const DELETE_POLICY_EXAMPLE_FILE = __DIR__ . '/../etc/delete_policy.json';
 
     /**
      * @var Register
@@ -179,6 +181,34 @@ class DuplicatedFilesTool extends Command
             null,
             'Show only list of duplicated files with their paths.'
         );
+
+        $this->addOption(
+            'auto-delete',
+            'd',
+            null,
+            'Automatically delete duplicated files. Files for delete depend of list of duplications.'
+        );
+
+        $this->addOption(
+            'delete-backup',
+            'b',
+            InputArgument::OPTIONAL,
+            'Instead of delete, all duplicated files are backup with directory structure.'
+        );
+
+        $this->addOption(
+            'delete-policy',
+            'D',
+            InputArgument::OPTIONAL,
+            'Path to file with delete policy for automatic delete.'
+        );
+
+        $this->addOption(
+            'delete-policy-example',
+            'E',
+            InputArgument::OPTIONAL,
+            'Return example file with delete policy rules.'
+        );
     }
 
     /**
@@ -192,6 +222,11 @@ class DuplicatedFilesTool extends Command
     {
         $this->input = $input;
         $this->output = $output;
+
+        if ($this->input->getOption('delete-policy-example')) {
+            $output->write(\file_get_contents(self::DELETE_POLICY_EXAMPLE_FILE));
+            return;
+        }
 
         $sources = $this->input->getArgument('source');
         if (empty($sources)) {
@@ -212,6 +247,17 @@ class DuplicatedFilesTool extends Command
 
         if ($this->input->getOption('list-only') && $this->input->getOption('interactive')) {
             throw new \InvalidArgumentException('Interactive & list only options are incompatible.');
+        }
+
+        if ($this->input->getOption('auto-delete') && $this->input->getOption('interactive')) {
+            throw new \InvalidArgumentException('Interactive & auto delete options are incompatible.');
+        }
+
+        if (
+            !$this->input->getOption('auto-delete')
+            && ($this->input->getOption('delete-policy') || $this->input->getOption('delete-backup'))
+        ) {
+            throw new \InvalidArgumentException('Delete policy & delete backup require auto delete option.');
         }
 
         $this->blueStyle->title('Check file duplications');
@@ -239,7 +285,7 @@ class DuplicatedFilesTool extends Command
         $this->blueStyle->infoMessage('Compare files.');
         $this->duplicationCheckStrategy($data);
 
-        if ($this->input->getOption('interactive')) {
+        if ($this->input->getOption('interactive') || $this->input->getOption('auto-delete')) {
             $this->blueStyle->infoMessage('Deleted files: <info>' . $this->deleteCounter . '</>');
             $this->blueStyle->infoMessage(
                 'Deleted files size: <info>' . Formats::dataSize($this->deleteSizeCounter) . '</>'
@@ -299,6 +345,10 @@ class DuplicatedFilesTool extends Command
 
         if ($this->input->getOption('size')) {
             foreach ($fileList as $file) {
+                if (!$file) {
+                    continue;
+                }
+
                 $fileInfo = new \SplFileInfo($file);
                 $fileListBySize[$fileInfo->getSize()][] = $file;
             }
@@ -533,10 +583,19 @@ class DuplicatedFilesTool extends Command
     {
         $hashes = $list['hashes'];
         $names = $list['names'];
-        $name = 'Interactive';
 
-        if (!$this->input->getOption('interactive')) {
-            $name = 'No' . $name;
+        switch (true) {
+            case $this->input->getOption('auto-delete'):
+                $name = 'AutoDel';
+                break;
+
+            case !$this->input->getOption('interactive'):
+                $name = 'NoInteractive';
+                break;
+
+            default:
+                $name = 'Interactive';
+                break;
         }
 
         try {
@@ -550,6 +609,13 @@ class DuplicatedFilesTool extends Command
             $strategy = $this->register->factory('DuplicateDetector\Duplicated\\' . $name, [$this]);
         } catch (RegisterException $exception) {
             throw new \DomainException('RegisterException: ' . $exception->getMessage());
+        }
+
+        if ($strategy instanceof AutoDel) {
+            $strategy->options = [
+                $this->input->getOption('delete-backup'),
+                $this->input->getOption('delete-policy'),
+            ];
         }
 
         $duplications = $this->duplicationsInfo($hashes);
