@@ -34,32 +34,14 @@ class AutoDel implements Strategy
     public function checkByHash(array $hash): Strategy
     {
         $this->blueStyle->newLine();
-        $copy = false;
-
-        if ($this->options[0]) {
-            $copy = true;
-        }
 
         $keep = \array_shift($hash);
         $this->blueStyle->okMessage("Keep: $keep");
 
         foreach ($hash as $file) {
-            if ($copy) {
-                Fs::mkdir(\dirname($this->options[0] . $file));
-                $out = Fs::copy($file, $this->options[0] . $file, true);
-            }
-
-            $out = Fs::delete($file);
-
-            if (reset($out)) {
-                $this->blueStyle->okMessage("Removed: $file");
-                $this->deleteCounter++;
-            } else {
-                $this->blueStyle->errorMessage("Removed fail: $file");
-            }
+            $this->copy($file);
+            $this->delete($file);
         }
-
-        //choose deletion strategy (auto or rules  from file)
 
         $this->blueStyle->newLine();
 
@@ -76,5 +58,42 @@ class AutoDel implements Strategy
             $this->deleteCounter,
             $this->deleteSizeCounter,
         ];
+    }
+
+    /**
+     * @param string $file
+     * @throws \Exception
+     */
+    protected function delete(string $file): void
+    {
+        //choose deletion strategy (auto or rules  from file)
+        $out = Fs::delete($file);
+
+        if (reset($out)) {
+            $this->blueStyle->okMessage("Removed: $file");
+            $this->deleteCounter++;
+        } else {
+            $this->blueStyle->errorMessage("Removed fail: $file");
+        }
+    }
+
+    /**
+     * @param string $file
+     * @throws \Exception
+     */
+    protected function copy(string $file): void
+    {
+        if ($this->options[0]) {
+            $destination = $this->options[0] . $file;
+            Fs::mkdir(\dirname($this->options[0] . $file));
+            $out = Fs::copy($file, $destination, true);
+
+            if (reset($out)) {
+                $this->blueStyle->okMessage("Copy: $file to ");
+                $this->deleteCounter++;
+            } else {
+                $this->blueStyle->errorMessage("Copy fail: $file");
+            }
+        }
     }
 }
