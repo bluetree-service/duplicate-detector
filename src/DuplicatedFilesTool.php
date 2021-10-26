@@ -83,6 +83,11 @@ class DuplicatedFilesTool extends Command
     protected int $duplicatedFiles = 0;
     protected int $duplicatedFilesSize = 0;
 
+    /**
+     * @var array
+     */
+    protected array $dataPipe = [];
+
     public function __construct()
     {
         parent::__construct();
@@ -209,6 +214,13 @@ class DuplicatedFilesTool extends Command
             InputArgument::OPTIONAL,
             'Return example file with delete policy rules.'
         );
+
+        $this->addOption(
+            'auto-delete-test',
+            'T',
+            null,
+            'Test auto deletion. Proceed normally (apply rules, copy if required), but skip file delete.'
+        );
     }
 
     /**
@@ -260,6 +272,8 @@ class DuplicatedFilesTool extends Command
             throw new \InvalidArgumentException('Delete policy & delete backup require auto delete option.');
         }
 
+        $this->getDeletePolicy();
+
         $this->blueStyle->title('Check file duplications');
         $this->blueStyle->infoMessage('Reading directory.');
 
@@ -302,6 +316,25 @@ class DuplicatedFilesTool extends Command
             'Duplicated files size: <info>' . Formats::dataSize($this->duplicatedFilesSize) . '</>'
         );
         $this->blueStyle->newLine();
+    }
+
+    protected function getDeletePolicy(): void
+    {
+        if ($this->input->getOption('delete-policy')) {
+            try {
+                $dataPipe = pipe($this->input->getOption('delete-policy'))
+                    ->fileGetContents
+                    ->trim
+                    ->jsonDecode(_, true, 512, JSON_THROW_ON_ERROR);
+
+                $this->dataPipe = $dataPipe();
+            } catch (\Throwable $exception) {
+                $this->blueStyle->error(
+                    "Error {$exception->getMessage()} - {$exception->getFile()}:{$exception->getLine()}"
+                );
+                exit;
+            }
+        }
     }
 
     /**
@@ -614,7 +647,8 @@ class DuplicatedFilesTool extends Command
         if ($strategy instanceof AutoDel) {
             $strategy->options = [
                 $this->input->getOption('delete-backup'),
-                $this->input->getOption('delete-policy'),
+                $this->dataPipe,
+                $this->input->getOption('auto-delete-test'),
             ];
         }
 
