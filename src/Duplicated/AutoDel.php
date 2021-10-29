@@ -18,6 +18,7 @@ class AutoDel implements Strategy
     protected int $duplicatedFiles = 0;
     protected int $duplicatedFilesSize = 0;
     protected bool $showNewLine = true;
+    protected bool $keep;
 
     /**
      * @param DuplicatedFilesTool $dft
@@ -45,18 +46,17 @@ class AutoDel implements Strategy
         }
 
         if (empty($this->options[1])) {
-            $keep = \array_shift($hash);
-            $this->blueStyle->okMessage("Keep: $keep");
-            $this->showNewLine = true;
-
-            foreach ($hash as $file) {
-                $this->remove($file);
-            }
+            $this->processAuto($hash);
 
             return $this;
         }
 
         $hash = $this->processKeepPolicy($hash);
+
+        if (!$this->keep) {
+            $hash = $this->processAuto($hash);
+        }
+
         $this->processDeletePolicy($hash);
 
         return $this;
@@ -67,8 +67,29 @@ class AutoDel implements Strategy
      * @return array
      * @throws \Exception
      */
+    protected function processAuto(array $hash): array
+    {
+        $keep = \array_shift($hash);
+
+        $this->blueStyle->okMessage("<fg=green>Keep</>: $keep");
+        $this->showNewLine = true;
+
+        foreach (\array_keys($hash) as $index) {
+            $hash = $this->delete($hash, $index);
+        }
+
+        return $hash;
+    }
+
+    /**
+     * @param array $hash
+     * @return array
+     * @throws \Exception
+     */
     protected function processKeepPolicy(array $hash): array
     {
+        $this->keep = false;
+
         foreach ($this->options[1]['keep_rule'] as $name => $rule) {
             if (empty($rule)) {
                 continue;
@@ -239,6 +260,7 @@ class AutoDel implements Strategy
      */
     protected function keep(array $hash, int $index): array
     {
+        $this->keep = true;
         $keep = $hash[$index];
         unset($hash[$index]);
         $this->blueStyle->okMessage("<fg=green>Keep</>: $keep");
@@ -303,8 +325,8 @@ class AutoDel implements Strategy
         }
 
         if (!$deleteRules) {
-            foreach ($hash as $file) {
-                $this->remove($file);
+            foreach (\array_keys($hash) as $index) {
+                $hash = $this->delete($hash, $index);
             }
         }
 
@@ -329,7 +351,7 @@ class AutoDel implements Strategy
             $this->deleteCounter++;
             $this->deleteSizeCounter += \filesize($file);
         } else {
-            $this->blueStyle->errorMessage("<fg=red>Removed</>: $file");
+            $this->blueStyle->errorMessage("<fg=red>Removed</> failed: $file");
         }
 
         $this->showNewLine = true;
@@ -349,7 +371,7 @@ class AutoDel implements Strategy
             if (reset($out)) {
                 $this->blueStyle->okMessage("<fg=blue>Copy</>: $file to $destination");
             } else {
-                $this->blueStyle->errorMessage("<fg=blue>Copy</> fail: $file");
+                $this->blueStyle->errorMessage("<fg=blue>Copy</> failed: $file");
             }
 
             $this->showNewLine = true;
