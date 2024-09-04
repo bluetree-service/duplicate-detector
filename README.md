@@ -20,3 +20,5 @@ and provide them into a detector.
 `docker run -v ./dir1:/dir1 -v ./dir2:/dir2 -it --rm chajr/duplicate-detector detector -ipS -t 4 /dir1 /dir2`
 
 **This is beta version, so use it carefully**
+
+musi mieć dostęp do /tmp

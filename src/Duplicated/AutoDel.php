@@ -89,7 +89,7 @@ class AutoDel implements Strategy
     protected function processKeepPolicy(array $hash): array
     {
         $this->keep = false;
-
+        //odwrócić pętle, żeby niepotrzebnie nie sprawdzał ruli
         foreach ($this->options[1]['keep_rule'] as $name => $rule) {
             if (empty($rule)) {
                 continue;
@@ -341,6 +341,7 @@ class AutoDel implements Strategy
     {
         $out = [true];
         $this->copy($file);
+        $size = \filesize($file);
 
         if (!$this->options[2]) {
             $out = Fs::delete($file);
@@ -349,7 +350,7 @@ class AutoDel implements Strategy
         if (reset($out)) {
             $this->blueStyle->okMessage("<fg=red>Removed</>: $file");
             $this->deleteCounter++;
-            $this->deleteSizeCounter += \filesize($file);
+            $this->deleteSizeCounter += $size;
         } else {
             $this->blueStyle->errorMessage("<fg=red>Removed</> failed: $file");
         }

@@ -7,3 +7,5 @@ vendor/
 .gitignore
 .idea/
 .git
+tests/
+build/
