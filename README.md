@@ -19,6 +19,14 @@ and provide them into a detector.
 
 `docker run -v ./dir1:/dir1 -v ./dir2:/dir2 -it --rm chajr/duplicate-detector detector -ipS -t 4 /dir1 /dir2`
 
+To save list of duplicated files as HTML documents, mount `/out` directory and use `-H` (as last option,
+otherwise next argument is taken as output directory):
+
+`docker run -v ./dir1:/duplicates -v ./out:/out -it --rm chajr/duplicate-detector detector -S -t 4 -H`
+
+It creates `index.html` and `duplicates-0001.html`, `duplicates-0002.html`... pages with 100 duplications each.
+Duplications are sorted by directory. Old `duplicates-*.html` pages in output directory are removed.
+
 **This is beta version, so use it carefully**
 
 musi mieć dostęp do /tmp

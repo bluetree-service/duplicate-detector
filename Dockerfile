@@ -16,7 +16,8 @@ FROM php:7.4-cli-alpine
 COPY . /duplicate-detector/
 COPY --from=base /duplicate-detector/vendor /duplicate-detector/vendor
 
-RUN ln -s /duplicate-detector/bin/detector /usr/local/bin/detector; \
+RUN chmod +x /duplicate-detector/bin/detector; \
+    ln -s /duplicate-detector/bin/detector /usr/local/bin/detector; \
     chmod 0777 /tmp; \
     echo "memory_limit = -1" > /usr/local/etc/php/php.ini
 

@@ -7,6 +7,7 @@ namespace DuplicateDetector;
 use Symfony\Component\Console\{
     Input\InputInterface,
     Input\InputArgument,
+    Input\InputOption,
     Output\OutputInterface,
     Helper\FormatterHelper,
     Helper\ProgressBar,
@@ -42,6 +43,8 @@ class DuplicatedFilesTool extends Command
 {
     public const TMP_DUMP_DIR = '/tmp/';
     public const DELETE_POLICY_EXAMPLE_FILE = __DIR__ . '/../etc/delete_policy.json';
+    public const HTML_DIR = '/out';
+    public const HTML_PAGE_SIZE = 100;
 
     /**
      * @var Register
@@ -220,6 +223,15 @@ class DuplicatedFilesTool extends Command
             'T',
             null,
             'Test auto deletion. Proceed normally (apply rules, copy if required), but skip file delete.'
+        );
+
+        $this->addOption(
+            'html',
+            'H',
+            InputOption::VALUE_OPTIONAL,
+            'Save list of duplicated files as HTML documents (index.html + pages by '
+                . self::HTML_PAGE_SIZE . ' duplications) in given directory.',
+            false
         );
     }
 
@@ -655,6 +667,11 @@ class DuplicatedFilesTool extends Command
         $duplications = $this->duplicationsInfo($hashes);
         $left = $duplications;
 
+        // false = option not used, null = used without value
+        if ($this->input->getOption('html') !== false) {
+            $this->saveHtmlReport($hashes, $this->input->getOption('html') ?? self::HTML_DIR);
+        }
+
         foreach ($hashes as $hash) {
             if (\count($hash) > 1) {
                 $strategy->checkByHash($hash);
@@ -672,6 +689,145 @@ class DuplicatedFilesTool extends Command
         }
 
         [$this->duplicatedFilesSize, $this->deleteCounter, $this->deleteSizeCounter] = $strategy->returnCounters();
+    }
+
+    /**
+     * Files in group sorted by directory then name, groups sorted by their directory lists.
+     *
+     * @param array $hashes
+     * @param string $dir
+     * @throws \Exception
+     */
+    protected function saveHtmlReport(array $hashes, string $dir): void
+    {
+        $byDirectory = static function (string $first, string $second): int {
+            return \strnatcasecmp(\dirname($first), \dirname($second))
+                ?: \strnatcasecmp(\basename($first), \basename($second));
+        };
+
+        $groups = [];
+        $totalFiles = 0;
+        $totalSize = 0;
+
+        foreach ($hashes as $hash => $files) {
+            $files = \array_unique($files);
+            \usort($files, $byDirectory);
+            $totalFiles += \count($files);
+            $groups[] = ['hash' => (string)$hash, 'files' => $files];
+        }
+
+        // compare directory lists: first directories, on tie second ones etc., then file names
+        \usort($groups, static function (array $first, array $second) use ($byDirectory): int {
+            $count = \min(\count($first['files']), \count($second['files']));
+
+            for ($i = 0; $i < $count; $i++) {
+                $result = \strnatcasecmp(\dirname($first['files'][$i]), \dirname($second['files'][$i]));
+
+                if ($result !== 0) {
+                    return $result;
+                }
+            }
+
+            return \count($first['files']) <=> \count($second['files'])
+                ?: $byDirectory($first['files'][0], $second['files'][0]);
+        });
+
+        if (!\is_dir($dir) && !@\mkdir($dir, 0777, true)) {
+            $this->blueStyle->errorMessage("Unable to create HTML report directory: $dir");
+            return;
+        }
+
+        foreach (\glob("$dir/duplicates-*.html") as $oldPage) {
+            Fs::delete($oldPage);
+        }
+
+        $pages = \array_chunk($groups, self::HTML_PAGE_SIZE);
+        $pagesCount = \count($pages);
+        $pageName = static function (int $page): string {
+            return \sprintf('duplicates-%04d.html', $page);
+        };
+        $indexRows = '';
+
+        foreach ($pages as $index => $pageGroups) {
+            $page = $index + 1;
+            $body = '';
+            $pageSize = 0;
+
+            foreach ($pageGroups as $groupIndex => $group) {
+                $number = $index * self::HTML_PAGE_SIZE + $groupIndex + 1;
+                $rows = '';
+
+                foreach ($group['files'] as $file) {
+                    $size = (int)@\filesize($file);
+                    $pageSize += $size;
+                    $rows .= '<tr><td>' . \htmlspecialchars($file) . '</td><td class="size">'
+                        . Formats::dataSize($size) . '</td></tr>';
+                }
+
+                $body .= "<h2>#$number <small>" . \htmlspecialchars($group['hash']) . '</small></h2>'
+                    . "<table>$rows</table>";
+            }
+
+            $totalSize += $pageSize;
+            $nav = '<p class="nav"><a href="index.html">index</a>'
+                . ($page > 1 ? ' | <a href="' . $pageName($page - 1) . '">&lsaquo; previous</a>' : '')
+                . " | page $page / $pagesCount"
+                . ($page < $pagesCount ? ' | <a href="' . $pageName($page + 1) . '">next &rsaquo;</a>' : '')
+                . '</p>';
+
+            $this->writeHtml("$dir/{$pageName($page)}", "Duplicated files - page $page", $nav . $body . $nav);
+
+            $firstDir = \htmlspecialchars(\dirname(\reset($pageGroups)['files'][0]));
+            $lastDir = \htmlspecialchars(\dirname(\end($pageGroups)['files'][0]));
+            $indexRows .= "<tr><td><a href=\"{$pageName($page)}\">page $page</a></td>"
+                . "<td>$firstDir<br>$lastDir</td><td class=\"size\">" . Formats::dataSize($pageSize) . '</td></tr>';
+        }
+
+        $summary = '<p>Duplications: <b>' . \count($groups) . "</b>, duplicated files: <b>$totalFiles</b>, size: <b>"
+            . Formats::dataSize($totalSize) . '</b>, generated: ' . \date('Y-m-d H:i:s') . '</p>';
+
+        $this->writeHtml("$dir/index.html", 'Duplicated files', "$summary<table>$indexRows</table>");
+        $this->blueStyle->infoMessage("HTML report saved: <info>$dir/index.html</> ($pagesCount pages)");
+    }
+
+    /**
+     * @param string $path
+     * @param string $title
+     * @param string $body
+     * @throws \Exception
+     */
+    protected function writeHtml(string $path, string $title, string $body): void
+    {
+        $html = <<<HTML
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>$title</title>
+<style>
+:root { color-scheme: dark; }
+body { font-family: sans-serif; margin: 2em; background: #1e1f22; color: #d4d4d4; }
+b { color: #fff; }
+h2 { font-size: 1em; margin: 1.5em 0 .3em; }
+h2 small { color: #8a8a8a; font-weight: normal; font-family: monospace; }
+table { border-collapse: collapse; width: 100%; }
+td { border: 1px solid #3a3b3f; padding: .3em .6em; font-family: monospace; word-break: break-all; }
+td.size { width: 8em; text-align: right; white-space: nowrap; color: #9cdcfe; }
+tr:nth-child(even) { background: #26272b; }
+a { color: #6cb6ff; }
+.nav { font-size: 1.1em; }
+</style>
+</head>
+<body>
+<h1>$title</h1>
+$body
+</body>
+</html>
+HTML;
+
+        if (\file_put_contents($path, $html) === false) {
+            $this->blueStyle->errorMessage("Unable to save HTML report: $path");
+        }
     }
 
     /**
