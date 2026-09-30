@@ -6,15 +6,13 @@ namespace DuplicateDetector\Duplicated;
 
 use DuplicateDetector\DuplicatedFilesTool;
 use BlueData\Data\Formats;
-use BlueConsole\Style;
-use Symfony\Component\Console\Input\InputInterface;
 
 class NoInteractive implements Strategy
 {
     /**
-     * @var Style
+     * @var \BlueConsole\Style
      */
-    protected Style $blueStyle;
+    protected \BlueConsole\Style $blueStyle;
 
     /**
      * @var int
@@ -22,9 +20,9 @@ class NoInteractive implements Strategy
     protected int $duplicatedFilesSize = 0;
 
     /**
-     * @var InputInterface
+     * @var \Symfony\Component\Console\Input\InputInterface
      */
-    protected InputInterface $input;
+    protected \Symfony\Component\Console\Input\InputInterface $input;
 
     /**
      * @param DuplicatedFilesTool $dft
@@ -36,15 +34,16 @@ class NoInteractive implements Strategy
     }
 
     /**
-     * @param array $hash
+     * @param array $hashes
      * @return $this
      */
-    public function checkByHash(array $hash): Strategy
+    public function checkByHash(array $hashes): Strategy
     {
-        foreach ($hash as $file) {
+        foreach ($hashes as $file) {
             $size = null;
 
             if (!$this->input->getOption('list-only')) {
+                /** @noinspection ReturnFalseInspection */
                 $size = \filesize($file);
                 $this->duplicatedFilesSize += $size;
                 $formattedSize = Formats::dataSize($size);

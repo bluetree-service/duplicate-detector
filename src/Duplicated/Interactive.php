@@ -8,16 +8,18 @@ use DuplicateDetector\DuplicatedFilesTool;
 use BlueConsole\MultiSelect;
 use BlueData\Data\Formats;
 use BlueFilesystem\StaticObjects\Fs;
-use BlueConsole\Style;
 
 class Interactive implements Strategy
 {
+    /**
+     * @todo use \BlueConsole\MultiSelect::MOD_LINE_CHAR after library update
+     */
     public const MOD_LINE_CHAR = "\033[1A";
 
     /**
-     * @var Style
+     * @var \BlueConsole\Style
      */
-    protected Style $blueStyle;
+    protected \BlueConsole\Style $blueStyle;
 
     /**
      * @var MultiSelect
@@ -40,15 +42,15 @@ class Interactive implements Strategy
     }
 
     /**
-     * @param array $hash
+     * @param array $hashes
      * @return Interactive
      * @throws \Exception
      */
-    public function checkByHash(array $hash) : Strategy
+    public function checkByHash(array $hashes): Strategy
     {
         $this->blueStyle->newLine(2);
 
-        $this->interactive($hash, $this->multiselect);
+        $this->interactive($hashes, $this->multiselect);
 
         $this->blueStyle->newLine();
 
@@ -58,7 +60,7 @@ class Interactive implements Strategy
     /**
      * @return array
      */
-    public function returnCounters() : array
+    public function returnCounters(): array
     {
         return [
             $this->duplicatedFilesSize,
@@ -73,18 +75,20 @@ class Interactive implements Strategy
      * @return $this
      * @throws \Exception
      */
-    protected function interactive(array $hash, MultiSelect $multiselect) : self
+    protected function interactive(array $hash, MultiSelect $multiselect): self
     {
         $hashWithSize = [];
+        \natcasesort($hash);
 
         foreach ($hash as $file) {
-            $size = filesize($file);
+            $size = \filesize($file);
             $this->duplicatedFilesSize += $size;
 
             $formattedSize = Formats::dataSize($size);
             $hashWithSize[] = "$file (<info>$formattedSize</>)";
         }
 
+        //@todo show deleted file size
         $selected = $multiselect->renderMultiSelect($hashWithSize);
 
         if ($selected) {
@@ -99,16 +103,17 @@ class Interactive implements Strategy
      * @param array $hash
      * @throws \Exception
      */
-    protected function processRemoving(array $selected, array $hash) : void
+    protected function processRemoving(array $selected, array $hash): void
     {
-        foreach (array_keys($selected) as $idToDelete) {
-            $this->deleteSizeCounter += filesize($hash[$idToDelete]);
+        foreach (\array_keys($selected) as $idToDelete) {
+            //delete process
+            $this->deleteSizeCounter += \filesize($hash[$idToDelete]);
             $this->blueStyle->infoMessage('Removing: ' . $hash[$idToDelete]);
             $out = Fs::delete($hash[$idToDelete]);
 
             echo self::MOD_LINE_CHAR;
 
-            if (reset($out)) {
+            if (\reset($out)) {
                 $this->blueStyle->okMessage('Removed success: ' . $hash[$idToDelete]);
                 $this->deleteCounter++;
             } else {

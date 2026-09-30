@@ -13,6 +13,8 @@ RUN wget https://raw.githubusercontent.com/composer/getcomposer.org/76a7060ccb93
 
 FROM php:7.4-cli-alpine
 
+#install redis
+
 COPY . /duplicate-detector/
 COPY --from=base /duplicate-detector/vendor /duplicate-detector/vendor
 

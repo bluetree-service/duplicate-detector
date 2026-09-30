@@ -1,54 +1,54 @@
 <?php
 
-/** @noinspection MultiAssignmentUsageInspection */
-$hasHListFile = $argv[1];
-$chunk = $argv[2];
+[$session, $chunk, $thread, $delay] = $argv;
+$redis = null;
 
 try {
-    if (!file_exists($hasHListFile)) {
-        throw new RuntimeException("Missing data file: $hasHListFile");
-    }
-
-    $fileList = json_decode(file_get_contents($hasHListFile), true, 512, JSON_THROW_ON_ERROR);
+    $redis = new Redis();
+    $redis->connect('127.0.0.1', 6378);
+    $verboseContent = '';
     $hashes = [];
-    $names = [];
-    $count = count($fileList);
     $done = 0;
 
-    foreach ($fileList as $file) {
-        if ($chunk) {
-            $content = file_get_contents($file, false, null, 0, $chunk);
-            $hash = hash('sha3-256', $content);
-        } else {
-            $hash = hash_file('sha3-256', $file);
+    usleep($delay * 1000);
+
+    while ($file = $redis->lPop("$session-paths")) {
+        //@todo    if ($this->input->getOption('skip-empty') && filesize($file) === 0) {
+        //@todo    if ($this->input->getOption('check-by-name')) {
+        $redis->incr("$session-hashes-processed");
+        $done++;
+
+        try {
+            if ($chunk) {
+                $content = file_get_contents($file, false, null, 0, $chunk);
+                $hash = hash('sha3-256', $content);
+            } else {
+                $hash = hash_file('sha3-256', $file);
+            }
+        } catch (Throwable $exception) {
+            $redis->sAdd("$session-errors", $exception->getMessage());
+            echo json_encode(['status' => ['done' => $done . $verboseContent]], JSON_THROW_ON_ERROR);
+            continue;
+        }
+
+        echo json_encode(['status' => ['done' => $done . $verboseContent]], JSON_THROW_ON_ERROR);
+
+        $hashes = $redis->hGet("$session-hashes", "thread-$thread");
+
+        if ($hashes) {
+            $hashes = json_decode($hashes, true);
         }
 
         $hashes[$hash][] = $file;
-        echo json_encode(
-            [
-                'status'  => [
-                    'all' => $count,
-                    'left' => $done++
-                ],
-            ],
-            JSON_THROW_ON_ERROR,
-            512
-        );
+
+        $redis->hSet("$session-hashes", "thread-$thread", json_encode($hashes, JSON_THROW_ON_ERROR));
     }
 
-    $data = json_encode(
-        [
-            'names'  => $names,
-            'hashes' => $hashes
-        ],
-        JSON_THROW_ON_ERROR,
-        512
-    );
-
-    file_put_contents($hasHListFile, $data);
-
-    echo '{"status": "ok"}';
+    echo '{"status": {"message": "ok ' . $done . $verboseContent . '"}}';
 } catch (Throwable $exception) {
     $message = $exception->getMessage();
+    $redis?->sAdd("$session-errors", $exception->getMessage());
     echo "{\"status\":\"error\",\"message\": \"$message\"}";
 }
+
+usleep($delay * 1000);
