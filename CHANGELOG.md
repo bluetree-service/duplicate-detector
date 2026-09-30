@@ -1,7 +1,9 @@
 # Change Log
 
-## 0.4.0 - 2021-1
+## 0.4.0.0 - 2026-09-30
 ### Added
+* Redis transport between hash processes (`-r`, connection in `DUPLICATE_DETECTOR_REDIS`)
+* Per thread progress bars, paginated HTML report (`-H`)
 * Auto remove duplicated files
 * Delete policy rules
 * do doc:
@@ -13,6 +15,8 @@
 * możliwa kopia bezpieczeństwa przed skasowaniem (tylko tych co mają zostać skasowane)
 * *kolejność ruli wg pliku z regułami
 ### Changed
+* Implementation moved to `bluetree-service/duplicate-detector-lib`
+* PHP 8.2, Symfony Console 7.4
 * Reduce container weight
 * Changed building procedure
 

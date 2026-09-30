@@ -1,11 +1,11 @@
 {
-    "name": "chajr/tools-cli",
-    "type": "library",
+    "name": "bluetree-service/duplicate-detector",
+    "type": "project",
     "license": "Apache-2.0",
-    "description": "Useful console tools.",
-    "version": "0.3.0.0",
-    "keywords": [],
-    "homepage": "https://github.com/chajr/tools-cli",
+    "description": "Duplicated files detector.",
+    "version": "0.4.0.0",
+    "keywords": ["duplicate", "files", "hash", "console"],
+    "homepage": "https://github.com/bluetree-service/duplicate-detector",
     "authors": [
         {
             "name": "Michał Adamiak",
@@ -15,36 +15,17 @@
         }
     ],
     "require": {
-        "php": ">=8.0",
-        "symfony/console": "^4.1",
-        "bluetree-service/register": "0.3.*",
-        "bluetree-service/filesystem": "^0.2",
-        "bluetree-service/data": "~0.2",
-        "bluetree-service/symfony-console-style": "^0.4",
-        "react/child-process": "^0.6.1",
-        "ramsey/uuid": "^3.8",
-        "serafim/pipe": "^0.2.0",
+        "php": "^8.2",
+        "ext-json": "*",
         "ext-redis": "*",
-        "ext-json": "*"
-    },
-    "require-dev": {
-        "symfony/var-dumper": "~4.1",
-        "phpmetrics/phpmetrics": "^2.5"
-    },
-    "autoload": {
-        "psr-4": {
-            "DuplicateDetector\\": "src/"
-        }
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "DuplicateDetectorTest\\": "tests/"
-        }
+        "bluetree-service/duplicate-detector-lib": "^0.2"
     },
     "bin": [
         "bin/detector"
     ],
-    "scripts": {
-        "test": "phpunit --coverage-clover build/logs/clover.xml"
+    "config": {
+        "platform": {
+            "php": "8.2.0"
+        }
     }
 }
