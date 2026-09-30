@@ -7,27 +7,25 @@ $mainDir = __DIR__ . '/../';
 
 require_once $mainDir . 'vendor/autoload.php';
 
+use BlueDuplicateDetector\Command\DuplicatedFilesCommand;
+use BlueDuplicateDetector\Hasher\RedisTransport;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Output\ConsoleOutput;
-use DuplicateDetector\DuplicatedFilesTool;
 
-$composer = json_decode(
-    file_get_contents($mainDir . 'composer.json')
-);
-
-$code = 1;
-$output = new ConsoleOutput();
+$composer = json_decode(file_get_contents($mainDir . 'composer.json'));
 
 try {
-    $command = new DuplicatedFilesTool;
-    $application = new Application;
+    // --redis connection as JSON, same variable the lib passes to workers; missing = 127.0.0.1:6379
+    $redis = json_decode(getenv(RedisTransport::ENV) ?: '[]', true)
+        ?? throw new InvalidArgumentException(RedisTransport::ENV . ' is not valid JSON.');
+    $command = new DuplicatedFilesCommand('duplicate', ['/duplicates'], '/out', $redis);
+    $application = new Application($composer->description, $composer->version);
 
-    $application->setName($composer->description);
-    $application->setVersion($composer->version);
-    $application->add($command);
+    $application->addCommand($command);
     $application->setDefaultCommand($command->getName(), true);
 
-    $application->run();
+    exit($application->run());
 } catch (Throwable $exception) {
-    $output->writeln('<error>' . $exception->getMessage() . '</error>');
+    (new ConsoleOutput())->writeln('<error>' . $exception->getMessage() . '</error>');
+    exit(1);
 }
