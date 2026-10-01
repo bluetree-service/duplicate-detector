@@ -1,5 +1,10 @@
 # Change Log
 
+## 0.4.3.0 - 2026-10-01
+### Added
+* group hash shown above each group in list and interactive mode
+* colored list: first (kept) file green, other copies yellow; `-l` stays plain
+
 ## 0.4.2.0 - 2026-10-01
 ### Added
 * `-L hard|soft` replace deleted duplicate with link to kept copy (with `-d` or `-i`)
