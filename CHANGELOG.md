@@ -1,5 +1,10 @@
 # Change Log
 
+## 0.4.2.0 - 2026-10-01
+### Added
+* `-L hard|soft` replace deleted duplicate with link to kept copy (with `-d` or `-i`)
+* `-k` interactive mode keeps selected files and deletes the others
+
 ## 0.4.1.0 - 2026-10-01
 ### Added
 * `-x` skip directories (name or path pattern), `-I` check only files with name matching pattern, `-C` case insensitive patterns
