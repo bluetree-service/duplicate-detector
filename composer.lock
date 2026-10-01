@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "3251e65671a7556a7edf94a30ee01514",
+    "content-hash": "518dcd19995392d741b5f85c82942798",
     "packages": [
         {
             "name": "bluetree-service/data",
@@ -64,16 +64,16 @@
         },
         {
             "name": "bluetree-service/duplicate-detector-lib",
-            "version": "0.2.0.0",
+            "version": "0.3.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/bluetree-service/duplicate-detector-lib.git",
-                "reference": "c8e545d76916abfbdf034df51644b1e8bff038f0"
+                "reference": "c6fbef6e55929ae6ce76808c6c2c92fe64561a69"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/bluetree-service/duplicate-detector-lib/zipball/c8e545d76916abfbdf034df51644b1e8bff038f0",
-                "reference": "c8e545d76916abfbdf034df51644b1e8bff038f0",
+                "url": "https://api.github.com/repos/bluetree-service/duplicate-detector-lib/zipball/c6fbef6e55929ae6ce76808c6c2c92fe64561a69",
+                "reference": "c6fbef6e55929ae6ce76808c6c2c92fe64561a69",
                 "shasum": ""
             },
             "require": {
@@ -121,9 +121,9 @@
             ],
             "support": {
                 "issues": "https://github.com/bluetree-service/duplicate-detector-lib/issues",
-                "source": "https://github.com/bluetree-service/duplicate-detector-lib/tree/0.2.0.0"
+                "source": "https://github.com/bluetree-service/duplicate-detector-lib/tree/0.3.0.0"
             },
-            "time": "2026-09-29T17:44:16+00:00"
+            "time": "2026-10-01T18:40:44+00:00"
         },
         {
             "name": "bluetree-service/symfony-console-style",

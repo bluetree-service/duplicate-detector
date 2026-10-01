@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.4.1.0 - 2026-10-01
+### Added
+* `-x` skip directories (name or path pattern), `-I` check only files with name matching pattern, `-C` case insensitive patterns
+
 ## 0.4.0.0 - 2026-09-30
 ### Added
 * Redis transport between hash processes (`-r`, connection in `DUPLICATE_DETECTOR_REDIS`)
